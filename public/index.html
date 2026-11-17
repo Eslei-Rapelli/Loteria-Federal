@@ -508,7 +508,7 @@ btnEmail.addEventListener('click', function() {
     bets_summary: buildSummaryText()
   };
 
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+  emailjs.send("email_gmail", "template_2xtmxhp",templateParams)
     .then(function(response) {
        finishMsg.textContent = 'E-mail enviado com sucesso!';
        btnEmail.disabled = false;
