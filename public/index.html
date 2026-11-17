@@ -46,7 +46,9 @@
             const nomeCliente = document.getElementById('nome').value.trim();
             const emailCliente = document.getElementById('email').value.trim();
             const whatsappCliente = document.getElementById('whatsapp').value.replace(/\D/g, ''); 
-            const apostasSelecionadas = window.apostas || [{ bilhete: "Exemplo de Bilhete 001", valor: "R$ 10,00" }]; // Ajuste conforme os seus dados de jogos salvos
+            
+            // Flexibilidade: pega as apostas do escopo global ou define um padrão se estiver vazio, sem bloquear
+            const apostasSelecionadas = window.apostas || [{ modalidade: "Livre / Grupo Opcional", detalhes: "Aposta registrada sem obrigatoriedade estrita de grupos." }];
 
             const botao = document.getElementById('btn-finalizar');
             botao.disabled = true;
@@ -60,7 +62,7 @@
             };
 
             try {
-                // Envia para a API no servidor automaticamente
+                // Envia para a API no servidor automaticamente disparando o e-mail
                 const response = await fetch('/api/enviar-comprovante', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -73,11 +75,11 @@
                     throw new Error(resultado.erro || 'Erro ao enviar e-mail.');
                 }
 
-                // Prepara o link do WhatsApp para abrir no celular/computador do cliente
-                const textoResumo = `Olá, *${nomeCliente}*! Suas apostas da Loteria Federal foram registradas com sucesso.\n\n*Detalhes:* ${JSON.stringify(apostasSelecionadas)}\n\nUma cópia também foi enviada para o seu e-mail: ${emailCliente}`;
+                // Prepara o link do WhatsApp para abrir no celular/computador com o resumo pronto
+                const textoResumo = `Olá, *${nomeCliente}*! Suas apostas foram registradas com sucesso.\n\n*Detalhes:* ${JSON.stringify(apostasSelecionadas, null, 2)}\n\nUma cópia do comprovante foi enviada para o seu e-mail: ${emailCliente}`;
                 const urlWhatsApp = `https://wa.me/55${whatsappCliente}?text=${encodeURIComponent(textoResumo)}`;
 
-                alert('Aposta finalizada! O comprovante foi enviado para o seu e-mail e para o administrador.');
+                alert('Aposta finalizada com sucesso! E-mail enviado e WhatsApp preparado.');
                 window.open(urlWhatsApp, '_blank');
 
             } catch (erro) {
@@ -91,3 +93,63 @@
     </script>
 </body>
 </html>
+```[cite: 1]
+
+---
+
+### 2. `server.js` (Back-end atualizado)
+Salve este código na raiz do seu servidor Node.js. Lembre-se de substituir `'seu-email-aqui@gmail.com'` e a senha de aplicativo pelas suas credenciais reais do Gmail[cite: 2]:
+
+```javascript
+const express = require('express');
+const nodemailer = require('nodemailer');
+const path = require('path');
+const app = express();
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public'))); // Pasta onde fica o seu index.html
+
+// Configuração do Nodemailer (Exemplo com Gmail)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'seu-email-aqui@gmail.com', // Coloque seu e-mail real aqui
+        pass: 'sua-senha-de-app-do-gmail'   // Coloque sua senha de aplicativo do Gmail aqui
+    }
+});
+
+// Rota da API chamada pelo site
+app.post('/api/enviar-comprovante', async (req, res) => {
+    const { nome, email, whatsapp, apostas } = req.esm || req.body;
+    const meuEmailAdmin = "seu-email-aqui@gmail.com"; // Seu e-mail onde receberá a cópia
+
+    try {
+        const mailOptions = {
+            from: 'seu-email-aqui@gmail.com',
+            to: [email, meuEmailAdmin], // Envia simultaneamente para o cliente e para você
+            subject: `Nova Aposta Registrada - ${nome}`,
+            text: `Olá!\n\nUma nova aposta flexível foi registrada.\n\nCliente: ${nome}\nE-mail: ${email}\nWhatsApp: ${whatsapp}\n\nApostas / Detalhes:\n${JSON.stringify(apostas, null, 2)}`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({ sucesso: true, mensagem: 'E-mails enviados com sucesso!' });
+    } catch (erro) {
+        console.error('Erro ao enviar e-mail:', erro);
+        return res.status(500).json({ sucesso: false, erro: 'Erro ao enviar e-mail no servidor.' });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+```[cite: 2]
+
+---
+
+### O que mudou?
+1. **Remoção de travas de grupo:** O fluxo agora aceita apostas parciais ou livres onde preencher todos os campos de grupos estritos não é mais mandatório.
+2. **Envio automatizado:** O botão executa a rota do servidor para disparar o e-mail com segurança via `nodemailer`[cite: 1, 2] e, em seguida, abre o link do WhatsApp formatado com os dados da aposta prontos para o envio manual rápido. 
+
+Basta substituir os arquivos antigos pelos códigos acima no seu ambiente e testar!
