@@ -1,67 +1,45 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const path = require('path');
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware para ler JSON
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Pasta pública onde fica o seu index.html
 
-// Servir a pasta "public" onde fica o HTML/CSS/JS do site
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Rota para receber a aposta e enviar por E-mail
-app.post('/api/finalizar-aposta', async (req, res) => {
-    const { nome, telefone, email, estado, cidade, bets } = req.body;
-
-    // Montar o texto da aposta
-    let resumoApostas = bets.map((b, i) => `${i + 1}. ${b.mode}: [ ${b.values.join(' - ')} ]`).join('\n');
-    
-    const conteudoMensagem = `
-      ✿ BILHETE LOTERIA FEDERAL ✿
-      Concurso: 9999 | Data: 16/11/2026 - 21:00
-      
-      DADOS DO APOSTADOR:
-      - Nome: ${nome}
-      - Celular: ${telefone}
-      - E-mail: ${email}
-      - Local: ${cidade} - ${estado}
-      -----------------------------
-      APOSTAS REALIZADAS:
-      ${resumoApostas}
-      -----------------------------
-      Boa sorte!
-    `;
-
-    // Configuração do Transporter de E-mail (Exemplo usando Gmail ou serviço SMTP)
-    // Dica: No Render, você configurará variáveis de ambiente para o e-mail e senha de app
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER || 'seu-email@gmail.com',
-            pass: process.env.EMAIL_PASS || 'sua-senha-de-app'
-        }
-    });
-
-    const mailOptions = {
-        from: '"Loteria Federal" <no-reply@loteria.com>',
-        to: `${email}, ${process.env.EMAIL_ADMIN || 'seu-email-admin@gmail.com'}`, // Envia para o cliente e para você
-        subject: `Comprovante de Aposta - Loteria Federal (${nome})`,
-        text: conteudoMensagem
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({ sucesso: true, mensagem: 'Aposta finalizada e e-mails enviados com sucesso!' });
-    } catch (error) {
-        console.error('Erro ao enviar e-mail:', error);
-        // Mesmo se o e-mail falhar por configuração de senha, retornamos sucesso para o cliente não travar
-        res.status(200).json({ sucesso: true, mensagem: 'Aposta registrada com sucesso!' });
+// Configuração do Nodemailer (Exemplo com Gmail)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'seu-email-aqui@gmail.com', // Seu e-mail que faz o disparo
+        pass: 'sua-senha-de-app-do-gmail'   // Senha de aplicativo do Gmail
     }
 });
 
+// Rota da API chamada pelo site
+app.post('/api/enviar-comprovante', async (req, res) => {
+    const { nome, email, whatsapp, apostas } = req.body;
+
+    // SEU E-MAIL ADMINISTRATIVO (onde você vai receber a cópia)
+    const meuEmailAdmin = "seu-email-aqui@gmail.com"; 
+
+    try {
+        const mailOptions = {
+            from: 'seu-email-aqui@gmail.com',
+            to: [email, meuEmailAdmin], // Envia simultaneamente para o cliente e para você!
+            subject: `Nova Aposta Registrada - ${nome}`,
+            text: `Olá!\n\nUma nova aposta foi registrada.\n\nCliente: ${nome}\nE-mail: ${email}\nWhatsApp: ${whatsapp}\n\nApostas:\n${JSON.stringify(apostas, null, 2)}`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({ sucesso: true, mensagem: 'E-mails enviados com sucesso!' });
+    } catch (erro) {
+        console.error('Erro ao enviar e-mail:', erro);
+        return res.status(500).json({ sucesso: false, erro: 'Erro ao enviar e-mail no servidor.' });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
