@@ -165,8 +165,11 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
 </main>
 
 <script>
-// ATENÇÃO: Altere o número abaixo para o seu WhatsApp real (com DDI e DDD, ex: 5581999998888)
-const MEU_WHATSAPP = "5517-99248-0992"; 
+// =========================================================================
+// ATENÇÃO: Altere abaixo o seu número de WhatsApp real (DDI + DDD + Número)
+// Exemplo para Pernambuco/Recife: "5581999998888" (apenas números)
+// =========================================================================
+const MEU_WHATSAPP = "5517992480992"; 
 
 const MODES = {
   MILHAR:  { title: 'Modalidade: MILHAR (4 algarismos)',  slots: 4, digitsPerSlot: 1, type: 'digits' },
@@ -443,8 +446,8 @@ function renderTicket() {
 
 function validateFinish() {
   const hasName = playerName.value.trim().length > 1;
-  const hasPhone = playerPhone.value.replace(/\D/g, '').length >= 10;
-  const hasEmail = playerEmail.value.includes('@') && playerEmail.value.includes('.');
+  const hasPhone = playerPhone.value.trim().length > 5; // Validação simplificada para liberar o botão
+  const hasEmail = playerEmail.value.includes('@');
   const hasState = playerState.value !== "";
   const hasCity = playerCity.value !== "";
 
@@ -480,22 +483,22 @@ function buildSummaryText() {
 btnWhats.addEventListener('click', () => {
   const text = encodeURIComponent(buildSummaryText());
   finishMsg.textContent = 'Abrindo WhatsApp...';
-  window.open(`https://wa.me/${MEU_WHATSAPP}?text=${text}`, '_blank');
+  window.open(`https://api.whatsapp.com/send?phone=${MEU_WHATSAPP}&text=${text}`, '_blank');
 });
 
-// Botão de E-mail ajustado para abrir o WhatsApp de confirmação de cópia ou mailto sem travamento
 btnEmail.addEventListener('click', () => {
   const text = encodeURIComponent("Cópia do Bilhete:\n\n" + buildSummaryText());
   finishMsg.textContent = 'Abrindo WhatsApp (cópia)...';
-  window.open(`https://wa.me/${MEU_WHATSAPP}?text=${text}`, '_blank');
+  window.open(`https://api.whatsapp.com/send?phone=${MEU_WHATSAPP}&text=${text}`, '_blank');
 });
 
 modeButtons.forEach(btn => {
   btn.addEventListener('click', () => setMode(btn.dataset.mode));
 });
 
-[playerName, playerPhone, playerEmail].forEach(input => {
+[playerName, playerPhone, playerEmail, playerState, playerCity].forEach(input => {
   input.addEventListener('input', validateFinish);
+  input.addEventListener('change', validateFinish);
 });
 
 carregarEstados();
