@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Loteria Federal</title>
+<!-- Biblioteca do EmailJS -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      // Inicializando com a sua Public Key
+      emailjs.init("a6XJTaVEmG_To2yos");
+   })();
+</script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:16px;font-family:Arial,sans-serif;background:linear-gradient(135deg,#0067d9,#00b9ee 55%,#0753bd);color:#082b70}
@@ -122,8 +130,8 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
     <div>
       <h2>Informações do Jogo</h2>
       <p><strong>Concurso:</strong> 9999</p>
-      <p><strong>Data:</strong> 16/11/2026</p>
-      <p><strong>Horário:</strong> 21:00</p>
+      <p><strong>Data:</strong> 16/11/2026[cite: 1]</p>
+      <p><strong>Horário:</strong> 21:00[cite: 1]</p>
     </div>
     <div class="luck">✿<br>Boa Sorte!
       <p style="font-size:15px;color:white">Que a sorte esteja com você!</p>
@@ -155,7 +163,7 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
     <option value="">Selecione o Estado primeiro</option>
   </select>
   <br>
-  <button type="button" class="send" id="btnEmail" disabled>📲 Enviar via WhatsApp (Cópia)</button>
+  <button type="button" class="send" id="btnEmail" disabled>✉ Enviar por E-mail</button>
   <button type="button" class="wa" id="btnWhats" disabled>📲 Enviar no WhatsApp</button>
   <div class="finish-msg" id="finishMsg"></div>
 </section>
@@ -165,11 +173,11 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
 </main>
 
 <script>
-// =========================================================================
-// ATENÇÃO: Altere abaixo o seu número de WhatsApp real (DDI + DDD + Número)
-// Exemplo para Pernambuco/Recife: "5581999998888" (apenas números)
-// =========================================================================
 const MEU_WHATSAPP = "5517992480992"; 
+
+// Configurações do EmailJS
+const EMAILJS_SERVICE_ID = "email_gmail";
+const EMAILJS_TEMPLATE_ID = "template_2xtmxhp";
 
 const MODES = {
   MILHAR:  { title: 'Modalidade: MILHAR (4 algarismos)',  slots: 4, digitsPerSlot: 1, type: 'digits' },
@@ -446,7 +454,7 @@ function renderTicket() {
 
 function validateFinish() {
   const hasName = playerName.value.trim().length > 1;
-  const hasPhone = playerPhone.value.trim().length > 5; // Validação simplificada para liberar o botão
+  const hasPhone = playerPhone.value.trim().length > 5;
   const hasEmail = playerEmail.value.includes('@');
   const hasState = playerState.value !== "";
   const hasCity = playerCity.value !== "";
@@ -486,10 +494,29 @@ btnWhats.addEventListener('click', () => {
   window.open(`https://api.whatsapp.com/send?phone=${MEU_WHATSAPP}&text=${text}`, '_blank');
 });
 
-btnEmail.addEventListener('click', () => {
-  const text = encodeURIComponent("Cópia do Bilhete:\n\n" + buildSummaryText());
-  finishMsg.textContent = 'Abrindo WhatsApp (cópia)...';
-  window.open(`https://api.whatsapp.com/send?phone=${MEU_WHATSAPP}&text=${text}`, '_blank');
+// Integração do botão de E-mail usando o EmailJS
+btnEmail.addEventListener('click', function() {
+  btnEmail.disabled = true;
+  finishMsg.textContent = 'Enviando e-mail...';
+
+  const templateParams = {
+    player_name: playerName.value.trim(),
+    player_phone: playerPhone.value.trim(),
+    player_email: playerEmail.value.trim(),
+    player_state: playerState.value,
+    player_city: playerCity.value,
+    bets_summary: buildSummaryText()
+  };
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+    .then(function(response) {
+       finishMsg.textContent = 'E-mail enviado com sucesso!';
+       btnEmail.disabled = false;
+    }, function(error) {
+       finishMsg.textContent = 'Erro ao enviar e-mail. Verifique o console.';
+       console.error('FAILED...', error);
+       btnEmail.disabled = false;
+    });
 });
 
 modeButtons.forEach(btn => {
