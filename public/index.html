@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loteria Federal - Finalizar Aposta</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
         h2 { text-align: center; color: #333; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #666; font-weight: bold; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
         button:hover { background: #218838; }
     </style>
@@ -18,8 +19,25 @@
 <body>
 
     <div class="container">
-        <h2>Finalizar Aposta</h2>
+        <h2>Registro de Apostas</h2>
         <form id="form-aposta">
+            <div class="form-group">
+                <label for="modalidade">Modalidade:</label>
+                <select id="modalidade">
+                    <option value="Milhar">Milhar</option>
+                    <option value="Centena">Centena</option>
+                    <option value="Grupo">Grupo</option>
+                    <option value="Livre / Opcional">Livre / Opcional</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="detalhes-aposta">Detalhes / Números Escolhidos:</label>
+                <input type="text" id="detalhes-aposta" required placeholder="Ex: 5432 - R$ 10,00">
+            </div>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
             <div class="form-group">
                 <label for="nome">Seu Nome:</label>
                 <input type="text" id="nome" required placeholder="Digite seu nome completo">
@@ -43,11 +61,16 @@
         document.getElementById('form-aposta').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            const modalidade = document.getElementById('modalidade').value;
+            const detalhesAposta = document.getElementById('detalhes-aposta').value.trim();
             const nomeCliente = document.getElementById('nome').value.trim();
             const emailCliente = document.getElementById('email').value.trim();
             const whatsappCliente = document.getElementById('whatsapp').value.replace(/\D/g, ''); 
             
-            const apostasSelecionadas = window.apostas || [{ modalidade: "Livre / Grupo Opcional", detalhes: "Aposta registrada com sucesso." }];
+            const apostasSelecionadas = [{
+                modalidade: modalidade,
+                detalhes: detalhesAposta
+            }];
 
             const botao = document.getElementById('btn-finalizar');
             botao.disabled = true;
@@ -73,7 +96,7 @@
                     throw new Error(resultado.erro || 'Erro ao enviar e-mail.');
                 }
 
-                const textoResumo = `Olá, *${nomeCliente}*! Suas apostas foram registradas com sucesso.\n\n*Detalhes:* ${JSON.stringify(apostasSelecionadas, null, 2)}\n\nUma cópia do comprovante foi enviada para o seu e-mail: ${emailCliente}`;
+                const textoResumo = `Olá, *${nomeCliente}*! Suas apostas foram registradas com sucesso.\n\n*Modalidade:* ${modalidade}\n*Detalhes:* ${detalhesAposta}\n\nUma cópia do comprovante foi enviada para o seu e-mail: ${emailCliente}`;
                 const urlWhatsApp = `https://wa.me/55${whatsappCliente}?text=${encodeURIComponent(textoResumo)}`;
 
                 alert('Aposta finalizada com sucesso! E-mail enviado e WhatsApp preparado.');
@@ -90,55 +113,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
-
----
-
-### 2. `server.js` (Na raiz do projeto)
-Este arquivo fica na raiz (fora da pasta public), configurado para servir a pasta public e processar os e-mails[cite: 2]:
-
-```javascript
-const express = require('express');
-const nodemailer = require('nodemailer');
-const path = require('path');
-const app = express();
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // Aponta corretamente para a pasta public
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'seu-email-aqui@gmail.com', // Coloque seu e-mail real aqui
-        pass: 'sua-senha-de-app-do-gmail'   // Coloque sua senha de aplicativo do Gmail aqui
-    }
-});
-
-app.post('/api/enviar-comprovante', async (req, res) => {
-    const { nome, email, whatsapp, apostas } = req.body;
-    const meuEmailAdmin = "seu-email-aqui@gmail.com"; 
-
-    try {
-        const mailOptions = {
-            from: 'seu-email-aqui@gmail.com',
-            to: [email, meuEmailAdmin], 
-            subject: `Nova Aposta Registrada - ${nome}`,
-            text: `Olá!\n\nUma nova aposta flexível foi registrada.\n\nCliente: ${nome}\nE-mail: ${email}\nWhatsApp: ${whatsapp}\n\nApostas / Detalhes:\n${JSON.stringify(apostas, null, 2)}`
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        return res.status(200).json({ sucesso: true, mensagem: 'E-mails enviados com sucesso!' });
-    } catch (erro) {
-        console.error('Erro ao enviar e-mail:', erro);
-        return res.status(500).json({ sucesso: false, erro: 'Erro ao enviar e-mail no servidor.' });
-    }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-});
-```[cite: 2]
-
-Basta atualizar esses códigos no seu GitHub, ir novamente no Render e mandar fazer o **Manual Deploy** (`Clear cache and deploy`) para que o site volte a abrir perfeitamente na página certa!
