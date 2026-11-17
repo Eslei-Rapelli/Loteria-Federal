@@ -441,14 +441,14 @@ function renderTicket() {
 }
 
 function validateFinish() {
-  const hasBets = bets.length > 0;
+  // Removida a obrigatoriedade de ter apostas (hasBets) para liberar o envio
   const hasName = playerName.value.trim().length > 1;
   const hasPhone = playerPhone.value.replace(/\D/g, '').length >= 10;
   const hasEmail = playerEmail.value.includes('@') && playerEmail.value.includes('.');
   const hasState = playerState.value !== "";
   const hasCity = playerCity.value !== "";
 
-  const isValid = hasBets && hasName && hasPhone && hasEmail && hasState && hasCity;
+  const isValid = hasName && hasPhone && hasEmail && hasState && hasCity;
   btnWhats.disabled = !isValid;
   btnEmail.disabled = !isValid;
 }
@@ -464,9 +464,13 @@ function buildSummaryText() {
     `*SUAS APOSTAS:*`
   ];
 
-  bets.forEach((b, i) => {
-    lines.push(`${i + 1}. ${b.mode}: [ ${b.values.join(' - ')} ]`);
-  });
+  if (bets.length === 0) {
+    lines.push(`(Nenhuma aposta informada)`);
+  } else {
+    bets.forEach((b, i) => {
+      lines.push(`${i + 1}. ${b.mode}: [ ${b.values.join(' - ')} ]`);
+    });
+  }
 
   lines.push(`-----------------------------`);
   lines.push(`Boa sorte!`);
