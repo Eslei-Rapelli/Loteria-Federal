@@ -155,7 +155,7 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
     <option value="">Selecione o Estado primeiro</option>
   </select>
   <br>
-  <button type="button" class="send" id="btnEmail" disabled>✉ Finalizar e enviar por e-mail</button>
+  <button type="button" class="send" id="btnEmail" disabled>📲 Enviar via WhatsApp (Cópia)</button>
   <button type="button" class="wa" id="btnWhats" disabled>📲 Enviar no WhatsApp</button>
   <div class="finish-msg" id="finishMsg"></div>
 </section>
@@ -165,6 +165,9 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
 </main>
 
 <script>
+// ATENÇÃO: Altere o número abaixo para o seu WhatsApp real (com DDI e DDD, ex: 5581999998888)
+const MEU_WHATSAPP = "5517-99248-0992"; 
+
 const MODES = {
   MILHAR:  { title: 'Modalidade: MILHAR (4 algarismos)',  slots: 4, digitsPerSlot: 1, type: 'digits' },
   CENTENA: { title: 'Modalidade: CENTENA (3 algarismos)', slots: 3, digitsPerSlot: 1, type: 'digits' },
@@ -209,7 +212,6 @@ const btnEmail = document.getElementById('btnEmail');
 const btnWhats = document.getElementById('btnWhats');
 const finishMsg = document.getElementById('finishMsg');
 
-// Buscar Estados direto da API do IBGE
 async function carregarEstados() {
   try {
     const resposta = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
@@ -227,7 +229,6 @@ async function carregarEstados() {
   }
 }
 
-// Buscar Cidades do Estado selecionado direto da API do IBGE
 playerState.addEventListener('change', async () => {
   const uf = playerState.value;
   playerCity.innerHTML = '<option value="">Carregando cidades...</option>';
@@ -441,7 +442,6 @@ function renderTicket() {
 }
 
 function validateFinish() {
-  // Removida a obrigatoriedade de ter apostas (hasBets) para liberar o envio
   const hasName = playerName.value.trim().length > 1;
   const hasPhone = playerPhone.value.replace(/\D/g, '').length >= 10;
   const hasEmail = playerEmail.value.includes('@') && playerEmail.value.includes('.');
@@ -478,17 +478,16 @@ function buildSummaryText() {
 }
 
 btnWhats.addEventListener('click', () => {
-  const meuNumeroWhatsApp = "5511999999999"; // Coloque o seu número aqui
   const text = encodeURIComponent(buildSummaryText());
-  finishMsg.textContent = 'Abrindo WhatsApp do Administrador com o pedido...';
-  window.open(`https://wa.me/${meuNumeroWhatsApp}?text=${text}`, '_blank');
+  finishMsg.textContent = 'Abrindo WhatsApp...';
+  window.open(`https://wa.me/${MEU_WHATSAPP}?text=${text}`, '_blank');
 });
 
+// Botão de E-mail ajustado para abrir o WhatsApp de confirmação de cópia ou mailto sem travamento
 btnEmail.addEventListener('click', () => {
-  const subject = encodeURIComponent(`Novo Bilhete - Loteria Federal (${playerName.value.trim()})`);
-  const body = encodeURIComponent(buildSummaryText().replace(/\*/g, ''));
-  finishMsg.textContent = 'Abrindo cliente de e-mail...';
-  window.location.href = `mailto:${playerEmail.value.trim()}?subject=${subject}&body=${body}`;
+  const text = encodeURIComponent("Cópia do Bilhete:\n\n" + buildSummaryText());
+  finishMsg.textContent = 'Abrindo WhatsApp (cópia)...';
+  window.open(`https://wa.me/${MEU_WHATSAPP}?text=${text}`, '_blank');
 });
 
 modeButtons.forEach(btn => {
