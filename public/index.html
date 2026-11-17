@@ -8,7 +8,6 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="text/javascript">
    (function(){
-      // Inicializando com a sua Public Key
       emailjs.init("a6XJTaVEmG_To2yos");
    })();
 </script>
@@ -20,7 +19,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 .brand{font-size:clamp(25px,4vw,48px);font-weight:900;font-style:italic}
 .brand span{color:#ffd52e}
 .tagline{font-size:25px;color:#ffe45b;font-style:italic}
-.panel{background:white;border:3px solid #d8f5ff;border-radius:20px;overflow:hidden}
+.panel{background:white;border:3px solid #d8f5ff;border-radius:20px;overflow:hidden;margin-bottom:16px}
 .panel h2{margin:0;padding:13px;background:#073b91;color:white;text-align:center;font-size:22px}
 .top{margin:18px 0;background:#0751b8;border:2px solid #8deaff;border-radius:20px;padding:14px}
 .top h2{text-align:center;color:#ffe04a;margin:0 0 12px}
@@ -29,12 +28,12 @@ button{cursor:pointer;border:0;font-weight:bold;transition:transform 0.1s, opaci
 button:active:not(:disabled){transform:scale(0.96)}
 .digit{height:58px;border-radius:12px;background:linear-gradient(#fff,#dce7ff);color:#082d78;font-size:28px;box-shadow:0 3px 0 #04296b}
 .digit:disabled{opacity:0.4;cursor:not-allowed}
-.content{display:grid;grid-template-columns:250px 1fr 250px;gap:14px;align-items:stretch}
-.ticket,.info{padding:16px;text-align:center;min-height:320px;display:flex;flex-direction:column;justify-content:space-between}
+.ticket,.info{padding:16px;text-align:center;min-height:280px;display:flex;flex-direction:column;justify-content:space-between}
 .ticket h2,.info h2{margin:-16px -16px 12px -16px}
 .logo{background:#0751b8;color:white;padding:10px;margin:0 -16px 14px;font-weight:bold}
 .empty{color:#61718c;font-size:13px;margin:30px 0}
-.bets{max-height:280px;overflow-y:auto;margin:10px 0;text-align:left;flex-grow:1}
+/* Rolagem independente apenas para a lista de apostas */
+.bets{max-height:220px;overflow-y:auto;margin:10px 0;text-align:left;flex-grow:1;padding-right:4px}
 .bet{background:#eef4ff;border:1px solid #b9d0f5;border-radius:10px;padding:8px;margin-bottom:8px}
 .bet-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:bold;color:#16448d;margin-bottom:6px}
 .bet-del{background:#d92d35;color:white;border-radius:6px;width:26px;height:24px;font-size:14px;line-height:1}
@@ -69,7 +68,7 @@ button:active:not(:disabled){transform:scale(0.96)}
 .finish .send:disabled,.finish .wa:disabled{opacity:.5;cursor:not-allowed}
 .finish-msg{margin-top:10px;font-weight:bold;min-height:22px;color:#0a9c42}
 footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18px;padding:16px;text-align:center;font-weight:bold}
-@media(max-width:850px){.content{grid-template-columns:1fr}.modes{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:850px){.modes{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:520px){body{padding:8px}.digits{gap:4px}.digit{height:44px;font-size:21px}.top{padding:8px}.modes{grid-template-columns:repeat(2,1fr)}header{padding:14px}.tagline{display:none}.animal{min-height:40px;font-size:12px}.center .inner{padding:12px}}
 </style>
 </head>
@@ -82,6 +81,18 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
   <div class="tagline">Boa Sorte!<br><small style="font-size:14px;color:white">Jogue em Família</small></div>
 </header>
 
+<!-- 1. MODALIDADES NO TOPO -->
+<nav class="modes">
+  <button type="button" class="mode m1 active" data-mode="MILHAR">🎲<br>MILHAR</button>
+  <button type="button" class="mode m2" data-mode="CENTENA">▤<br>CENTENA</button>
+  <button type="button" class="mode m3" data-mode="DEZENA">◎<br>DEZENA</button>
+  <button type="button" class="mode m4" data-mode="UNIDADE">★<br>UNIDADE</button>
+  <button type="button" class="mode m5" data-mode="TERNO">★★★<br>TERNO</button>
+  <button type="button" class="mode m6" data-mode="DUPLA">★★<br>DUPLA</button>
+  <button type="button" class="mode m7" data-mode="GRUPO">♟<br>GRUPO</button>
+</nav>
+
+<!-- 2. ESCOLHA DE NÚMEROS E DIGITAÇÃO -->
 <section class="top" id="numericPanel">
   <h2>Escolha seus números de 0 a 9</h2>
   <div class="digits">
@@ -98,67 +109,44 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
   </div>
 </section>
 
-<section class="content">
-
-  <aside class="panel ticket">
-    <div>
-      <h2>Bilhete de Aposta</h2>
-      <div class="logo">✿ Loteria Federal</div>
-      <strong>Seus números:</strong>
-      <div class="empty" id="emptyMsg">Suas apostas aparecerão aqui.</div>
-      <div class="bets" id="betsList"></div>
+<section class="panel center">
+  <h2 id="modeTitle">Modalidade: MILHAR (4 algarismos)</h2>
+  <div class="inner">
+    <div class="entry-label" id="entryLabel">Número que você está digitando</div>
+    <div class="entry" id="entrySlots"></div>
+    <div class="actions">
+      <button type="button" class="action erase" id="btnErase">⌫ Apagar último</button>
+      <button type="button" class="action clear" id="btnClear">Limpar</button>
+      <button type="button" class="action confirm" id="btnConfirm" disabled>✓ Confirmar</button>
     </div>
-    <small>Sonhe. Aposte. Concorra.</small>
-  </aside>
-
-  <section class="panel center">
-    <h2 id="modeTitle">Modalidade: MILHAR (4 algarismos)</h2>
-    <div class="inner">
-      <div class="entry-label" id="entryLabel">Número que você está digitando</div>
-      <div class="entry" id="entrySlots"></div>
-      <div class="actions">
-        <button type="button" class="action erase" id="btnErase">⌫ Apagar último</button>
-        <button type="button" class="action clear" id="btnClear">Limpar</button>
-        <button type="button" class="action confirm" id="btnConfirm" disabled>✓ Confirmar</button>
-      </div>
-      <div class="status" id="status">Escolha seus números no teclado acima.</div>
-      <div class="animal-grid" id="animalGrid"></div>
-    </div>
-  </section>
-
-  <aside class="panel info">
-    <div>
-      <h2>Informações do Jogo</h2>
-      <p><strong>Concurso:</strong> 9999</p>
-      <p><strong>Data:</strong> 16/11/2026[cite: 1]</p>
-      <p><strong>Horário:</strong> 21:00[cite: 1]</p>
-    </div>
-    <div class="luck">✿<br>Boa Sorte!
-      <p style="font-size:15px;color:white">Que a sorte esteja com você!</p>
-    </div>
-  </aside>
-
+    <div class="status" id="status">Escolha seus números no teclado acima.</div>
+    <div class="animal-grid" id="animalGrid"></div>
+  </div>
 </section>
 
-<nav class="modes">
-  <button type="button" class="mode m1 active" data-mode="MILHAR">🎲<br>MILHAR</button>
-  <button type="button" class="mode m2" data-mode="CENTENA">▤<br>CENTENA</button>
-  <button type="button" class="mode m3" data-mode="DEZENA">◎<br>DEZENA</button>
-  <button type="button" class="mode m4" data-mode="UNIDADE">★<br>UNIDADE</button>
-  <button type="button" class="mode m5" data-mode="TERNO">★★★<br>TERNO</button>
-  <button type="button" class="mode m6" data-mode="DUPLA">★★<br>DUPLA</button>
-  <button type="button" class="mode m7" data-mode="GRUPO">♟<br>GRUPO</button>
-</nav>
+<!-- 3. BILHETE DE APOSTA -->
+<div class="panel ticket">
+  <div>
+    <h2>Bilhete de Aposta</h2>
+    <div class="logo">✿ Loteria Federal</div>
+    <strong>Seus números:</strong>
+    <div class="empty" id="emptyMsg">Suas apostas aparecerão aqui.</div>
+    <div class="bets" id="betsList"></div>
+  </div>
+  <small>Sonhe. Aposte. Concorra.</small>
+</div>
 
+<!-- 4. FINALIZAR E RECEBER SUA VIA -->
 <section class="finish">
   <h3>Finalizar e receber sua via</h3>
   <input type="text" id="playerName" placeholder="Seu nome">
-  <input type="tel" id="playerPhone" placeholder="Celular com DDD (ex: 11999998888)">
+  <input type="tel" id="playerPhone" placeholder="Celular (ex: 17 99116-9919)" maxlength="15">
   <input type="email" id="playerEmail" placeholder="Seu e-mail">
   <br>
   <select id="playerState">
     <option value="">Carregando Estados...</option>
   </select>
+  <!-- Select nativo de cidades para abrir a lista suspensa padrão idêntica à imagem -->
   <select id="playerCity" disabled>
     <option value="">Selecione o Estado primeiro</option>
   </select>
@@ -167,6 +155,19 @@ footer{background:#052d78;color:white;border:2px solid #39caff;border-radius:18p
   <button type="button" class="wa" id="btnWhats" disabled>📲 Enviar no WhatsApp</button>
   <div class="finish-msg" id="finishMsg"></div>
 </section>
+
+<!-- 5. INFORMAÇÕES DO JOGO POR ÚLTIMO -->
+<div class="panel info">
+  <div>
+    <h2>Informações do Jogo</h2>
+    <p><strong>Concurso:</strong> 9999</p>
+    <p><strong>Data:</strong> 16/11/2026[cite: 1]</p>
+    <p><strong>Horário:</strong> 21:00[cite: 1]</p>
+  </div>
+  <div class="luck">✿<br>Boa Sorte!
+    <p style="font-size:15px;color:white">Que a sorte esteja com você!</p>
+  </div>
+</div>
 
 <footer>⚙ Configurações  |  Loteria Federal... emoção em cada aposta!  |  Sobre</footer>
 
@@ -223,6 +224,41 @@ const btnEmail = document.getElementById('btnEmail');
 const btnWhats = document.getElementById('btnWhats');
 const finishMsg = document.getElementById('finishMsg');
 
+// --- LOCALSTORAGE: Carregar dados salvos ---
+function carregarDadosSalvos() {
+  if(localStorage.getItem('lot_name')) playerName.value = localStorage.getItem('lot_name');
+  if(localStorage.getItem('lot_phone')) playerPhone.value = localStorage.getItem('lot_phone');
+  if(localStorage.getItem('lot_email')) playerEmail.value = localStorage.getItem('lot_email');
+  if(localStorage.getItem('lot_state')) {
+    playerState.value = localStorage.getItem('lot_state');
+    carregarCidades(playerState.value, localStorage.getItem('lot_city'));
+  }
+}
+
+function salvarDados() {
+  localStorage.setItem('lot_name', playerName.value.trim());
+  localStorage.setItem('lot_phone', playerPhone.value.trim());
+  localStorage.setItem('lot_email', playerEmail.value.trim());
+  localStorage.setItem('lot_state', playerState.value);
+  localStorage.setItem('lot_city', playerCity.value);
+}
+
+// --- MÁSCARA DE TELEFONE ---
+playerPhone.addEventListener('input', (e) => {
+  let v = e.target.value.replace(/\D/g, "");
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 7) {
+    v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  } else if (v.length > 2) {
+    v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+  } else if (v.length > 0) {
+    v = `(${v}`;
+  }
+  e.target.value = v;
+  salvarDados();
+  validateFinish();
+});
+
 async function carregarEstados() {
   try {
     const resposta = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
@@ -235,13 +271,13 @@ async function carregarEstados() {
       opt.textContent = estado.nome;
       playerState.appendChild(opt);
     });
+    carregarDadosSalvos(); 
   } catch (erro) {
     playerState.innerHTML = '<option value="">Erro ao carregar estados</option>';
   }
 }
 
-playerState.addEventListener('change', async () => {
-  const uf = playerState.value;
+async function carregarCidades(uf, cidadeSelecionada = '') {
   playerCity.innerHTML = '<option value="">Carregando cidades...</option>';
   playerCity.disabled = true;
 
@@ -257,6 +293,8 @@ playerState.addEventListener('change', async () => {
         opt.textContent = cidade.nome;
         playerCity.appendChild(opt);
       });
+      
+      if(cidadeSelecionada) playerCity.value = cidadeSelecionada;
       playerCity.disabled = false;
     } catch (erro) {
       playerCity.innerHTML = '<option value="">Erro ao carregar cidades</option>';
@@ -264,6 +302,17 @@ playerState.addEventListener('change', async () => {
   } else {
     playerCity.innerHTML = '<option value="">Selecione o Estado primeiro</option>';
   }
+  validateFinish();
+}
+
+playerState.addEventListener('change', () => {
+  carregarCidades(playerState.value);
+  salvarDados();
+  validateFinish();
+});
+
+playerCity.addEventListener('change', () => {
+  salvarDados();
   validateFinish();
 });
 
@@ -300,21 +349,13 @@ function renderSlots() {
       slot.className = 'slot';
       const val = groupInputs[i] || '';
       slot.textContent = val;
-      if (val) {
-        slot.classList.add('filled');
-      }
+      if (val) slot.classList.add('filled');
       entrySlots.appendChild(slot);
     }
 
     const isComplete = groupInputs.length === cfg.slots;
     btnConfirm.disabled = !isComplete;
-
-    if (isComplete) {
-      statusEl.textContent = `Grupos preenchidos! Clique em Confirmar.`;
-    } else {
-      const faltam = cfg.slots - groupInputs.length;
-      statusEl.textContent = `Selecione mais ${faltam} grupo(s) na grade abaixo.`;
-    }
+    statusEl.textContent = isComplete ? `Grupos preenchidos! Clique em Confirmar.` : `Selecione mais ${cfg.slots - groupInputs.length} grupo(s) na grade abaixo.`;
 
   } else {
     const totalDigits = cfg.slots * cfg.digitsPerSlot;
@@ -323,18 +364,13 @@ function renderSlots() {
       slot.className = 'slot';
       const chunk = currentInput.slice(i * cfg.digitsPerSlot, (i + 1) * cfg.digitsPerSlot);
       slot.textContent = chunk;
-      if (chunk.length === cfg.digitsPerSlot) {
-        slot.classList.add('filled');
-      }
+      if (chunk.length === cfg.digitsPerSlot) slot.classList.add('filled');
       entrySlots.appendChild(slot);
     }
 
     const isComplete = currentInput.length === totalDigits;
     btnConfirm.disabled = !isComplete;
-
-    statusEl.textContent = isComplete
-      ? 'Número completo! Clique em Confirmar para adicionar ao bilhete.'
-      : `Digite ${totalDigits - currentInput.length} algarismo(s).`;
+    statusEl.textContent = isComplete ? 'Número completo! Clique em Confirmar para adicionar ao bilhete.' : `Digite ${totalDigits - currentInput.length} algarismo(s).`;
   }
 }
 
@@ -345,10 +381,7 @@ function setMode(mode) {
   const cfg = MODES[mode];
 
   modeTitle.textContent = cfg.title;
-  modeButtons.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-
+  modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
   document.querySelectorAll('.animal').forEach(b => b.classList.remove('sel'));
 
   if (cfg.type === 'group') {
@@ -494,7 +527,6 @@ btnWhats.addEventListener('click', () => {
   window.open(`https://api.whatsapp.com/send?phone=${MEU_WHATSAPP}&text=${text}`, '_blank');
 });
 
-// Integração do botão de E-mail usando o EmailJS
 btnEmail.addEventListener('click', function() {
   btnEmail.disabled = true;
   finishMsg.textContent = 'Enviando e-mail...';
@@ -508,7 +540,7 @@ btnEmail.addEventListener('click', function() {
     bets_summary: buildSummaryText()
   };
 
-  emailjs.send("email_gmail", "template_2xtmxhp",templateParams)
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
     .then(function(response) {
        finishMsg.textContent = 'E-mail enviado com sucesso!';
        btnEmail.disabled = false;
@@ -523,9 +555,11 @@ modeButtons.forEach(btn => {
   btn.addEventListener('click', () => setMode(btn.dataset.mode));
 });
 
-[playerName, playerPhone, playerEmail, playerState, playerCity].forEach(input => {
-  input.addEventListener('input', validateFinish);
-  input.addEventListener('change', validateFinish);
+[playerName, playerEmail].forEach(input => {
+  input.addEventListener('input', () => {
+    salvarDados();
+    validateFinish();
+  });
 });
 
 carregarEstados();
